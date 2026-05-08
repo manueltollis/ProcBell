@@ -1,29 +1,32 @@
-name: Auto-release on push to main
+name: Package and release
 
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
-# Serialize runs so concurrent pushes don't compete for the same tag.
 concurrency:
-  group: auto-release
+  group: package-and-release
   cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Compute next version
-        id: version
+      - name: Auto-tag (only on push to main)
+        if: github.ref == 'refs/heads/main'
         shell: bash
         run: |
           set -euo pipefail
@@ -39,15 +42,9 @@ jobs:
             patch=$((patch + 1))
             new_version="v${major}.${minor}.${patch}"
           fi
-          echo "Next version: $new_version"
-          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
-
-      - name: Create and push tag
-        run: |
-          git tag "${{ steps.version.outputs.new_version }}"
-          git push origin "${{ steps.version.outputs.new_version }}"
+          echo "Tagging $new_version"
+          git tag "$new_version"
+          git push origin "$new_version"
 
       - name: Package and release
         uses: BigWigsMods/packager@v2
-        env:
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
