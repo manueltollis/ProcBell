@@ -1,0 +1,10 @@
+## Interface: 120001
+## Title: ProcBell
+## Notes: Plays configurable sounds when you cast spells or gain auras.
+## Author: Manuel
+## Version: 3.0
+## SavedVariables: ProcBellDB
+
+Sounds.lua
+procbell.lua
+UI.lua

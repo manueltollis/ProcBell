@@ -1,0 +1,8 @@
+package-as: procbell
+
+ignore:
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - README.md
+  - .release
