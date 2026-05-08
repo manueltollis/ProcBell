@@ -35,19 +35,43 @@ Find spell/aura IDs on Wowhead — the URL ends in the ID, e.g. `wowhead.com/spe
 
 ## Adding custom sounds
 
-ProcBell embeds **LibSharedMedia-3.0**. Any sound registered into the LSM "sound" type from any other addon appears in the dropdown automatically — that's WeakAuras, BigWigs, Plater, Details, etc., plus the dedicated user-media addon below.
+ProcBell does not store custom sounds itself — the addon folder gets replaced on every update, so anything dropped in there would vanish. Instead, ProcBell embeds **LibSharedMedia-3.0** and reads its registry. Any sound registered there from any other addon shows up in ProcBell's dropdown automatically.
 
-To add your own `.ogg` files, install **SharedMedia_MyMedia**:
+The standard companion addons for adding your own files are:
 
-1. Get [SharedMedia](https://www.curseforge.com/wow/addons/shared-media-3-0) and [SharedMedia_MyMedia](https://www.curseforge.com/wow/addons/sharedmedia_mymedia) (any source — CurseForge, Wago, GitHub).
-2. Drop your `.ogg` files into `Interface\AddOns\SharedMedia_MyMedia\sound\` (or wherever the addon expects — its README will say).
-3. Edit `SharedMedia_MyMedia\MyMedia.lua` to register them, e.g.:
+- [**SharedMedia**](https://www.curseforge.com/wow/addons/sharedmedia) — the parent addon, ships ~50 default sounds/fonts/textures, provides the in-game browser.
+- [**SharedMedia MyMedia**](https://www.curseforge.com/wow/addons/sharedmedia_mymedia) — a stub addon with `sound\`, `font\`, and `statusbar\` folders intended for *your* custom files. Survives ProcBell updates because no addon manager owns it.
+
+### Step by step
+
+1. Install both **SharedMedia** and **SharedMedia MyMedia** from the links above (search for them in WowUp-CF / CurseForge / Wago — they both come from the catalog, no URL install needed).
+2. Drop your `.ogg` file into:
+   ```
+   World of Warcraft\_retail_\Interface\AddOns\SharedMedia_MyMedia\sound\
+   ```
+3. **Register the file with LSM.** This is the part that's easy to miss — just dropping the file is *not* enough; LSM needs an explicit `Register` call. Two ways:
+
+   **Option A: run the included batch script** (Windows). SharedMedia_MyMedia ships with a `.bat` file that scans the `sound\` folder and writes the `LSM:Register(...)` lines into `MyMedia.lua` for you. Double-click it after adding new files. Tip: if it doesn't seem to register everything on the first run, run it a second time — sometimes it needs the second pass to pick up everything.
+
+   **Option B: edit `MyMedia.lua` by hand**. Open `Interface\AddOns\SharedMedia_MyMedia\MyMedia.lua` in a text editor and add a line per sound:
    ```lua
    LSM:Register("sound", "MyAlert", [[Interface\AddOns\SharedMedia_MyMedia\sound\my-alert.ogg]])
    ```
-4. `/reload` — the sound now appears in ProcBell's dropdown alongside everything else.
+   - First arg is always `"sound"`.
+   - Second arg is the display name shown in dropdowns.
+   - Third arg is the full path. The `[[...]]` syntax means you don't have to escape backslashes.
 
-This is the standard ecosystem pattern — once you've registered a sound there, it's also available to WeakAuras, BigWigs, etc.
+4. `/reload` in-game. The sound now appears in ProcBell's dropdown — and in every other LSM-aware addon (WeakAuras, BigWigs, Plater, Details, etc.).
+
+### Verifying
+
+If a sound isn't showing up, run this in chat to dump everything LSM has registered:
+
+```
+/run for _, n in ipairs(LibStub("LibSharedMedia-3.0"):List("sound")) do print(n) end
+```
+
+If your sound's name isn't in the printed list, it didn't register — re-run the .bat or fix the line in `MyMedia.lua`. If it *is* in the list but missing from ProcBell's dropdown, that's a ProcBell bug — open an issue.
 
 ## Releasing
 
